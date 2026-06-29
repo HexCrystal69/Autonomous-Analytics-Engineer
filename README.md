@@ -108,5 +108,3 @@ In modern data platform operations, unexpected schema mutations, column distribu
 
 ---
 
-## 6. License
-This project is licensed under the MIT License.
