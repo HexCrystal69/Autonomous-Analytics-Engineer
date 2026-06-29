@@ -1,0 +1,6 @@
+apiVersion: v2
+name: analytics-engine
+description: A Helm chart for the Autonomous Analytics Engineer platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

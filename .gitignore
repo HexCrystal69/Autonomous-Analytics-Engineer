@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+.npm
+.eslintcache
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Environment & Secrets
+.env
+.env.*
+secrets/
+credentials/
+*.pem
+*.key
+
+# Docker & Databases
+volumes/
+postgres_data/
+redis_data/
+test.db
+
+# Logs
+*.log
+logs/
+
+# Reports & Outputs
+benchmark_outputs/
+chaos_outputs/
+test_outputs/
+coverage_reports/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Kubernetes
+kubeconfig

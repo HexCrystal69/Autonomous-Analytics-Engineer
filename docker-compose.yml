@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: analytics_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: analytics_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d analytics_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: analytics_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: analytics_backend
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+      - storage_data:/app/storage_data
+    ports:
+      - "8000:8000"
+    environment:
+      - PROJECT_NAME=Autonomous Analytics Engineer
+      - ENVIRONMENT=production
+      - SECRET_KEY=supersecretkeychangeinproduction
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/analytics_db
+      - REDIS_URL=redis://redis:6379/0
+      - STORAGE_PROVIDER=local
+      - STORAGE_DIR=storage_data
+      - MAX_FILE_SIZE_MB=50
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    container_name: analytics_worker
+    command: celery -A src.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+      - storage_data:/app/storage_data
+    environment:
+      - PROJECT_NAME=Autonomous Analytics Engineer
+      - ENVIRONMENT=production
+      - SECRET_KEY=supersecretkeychangeinproduction
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/analytics_db
+      - REDIS_URL=redis://redis:6379/0
+      - STORAGE_PROVIDER=local
+      - STORAGE_DIR=storage_data
+      - MAX_FILE_SIZE_MB=50
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: analytics_prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: analytics_grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  storage_data:
